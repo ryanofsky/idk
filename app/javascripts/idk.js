@@ -1,3 +1,30 @@
+var Content = React.createClass({
+  getInitialState: function() {
+    return {username: ''};
+  },
+
+  handleLoginSubmit: function(username) {
+    this.setState({username: username});
+  },
+
+  handleNewQuestion: function() {
+    this.setState({newQuestion: true});
+  },
+
+  render: function() {
+    var content;
+    if (this.state.newQuestion) {
+      content = (<NewQuestion />);
+    } else if (this.state.username) {
+      content = (<Menu username={this.state.username.username}
+                 onNewQuestion={this.handleNewQuestion} />);
+    } else {
+      content = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
+    }
+    return (content);
+  }
+});
+
 var LoginForm = React.createClass({
   getInitialState: function() {
     return {username: ''};
@@ -49,33 +76,6 @@ var Menu = React.createClass({
 
 var NewQuestion = React.createClass({
   render: function() { return (<div>New question</div>); }
-});
-
-var Content = React.createClass({
-  getInitialState: function() {
-    return {username: ''};
-  },
-
-  handleLoginSubmit: function(username) {
-    this.setState({username: username});
-  },
-
-  handleNewQuestion: function() {
-    this.setState({newQuestion: true});
-  },
-
-  render: function() {
-    var content;
-    if (this.state.newQuestion) {
-      content = (<NewQuestion />);
-    } else if (this.state.username) {
-      content = (<Menu username={this.state.username.username}
-                       onNewQuestion={this.handleNewQuestion} />);
-    } else {
-      content = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
-    }
-    return (content);
-  }
 });
 
 ReactDOM.render(<Content />, document.getElementById('content'));
