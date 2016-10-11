@@ -7,7 +7,7 @@ var SUBMIT_URL = "/api/submit";
 //     - One of:
 //       - LoginForm
 //       - Menu
-//       - NewQuestionForm
+//       - NewPostForm
 //     - Optional:
 //       - Question
 //     - QuestionList
@@ -25,23 +25,14 @@ var Content = React.createClass({
     this.setState({newQuestion: true});
   },
 
-  handleQuestionSubmit: function(question) {
+  handleQuestionPost: function(question) {
     this.setState({newQuestion: false});
-    // FIXME: Don't really need jQuery for this.
-    $.ajax({
-      url: SUBMIT_URL,
-      dataType: 'json',
-      type: 'POST',
-      data: {question: question, username: this.state.username.username},
-      success: function(response) {
-        console.log("Posted question", question);
-        console.log("Got response", response);
+    if (question !== null) {
+      submitPost({question: question,
+                  username: this.state.username.username}).then(function() {
         this.refs.questionList.loadQuestions();
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.log("Error posting question", question, "status", status, "error", err.toString());
-      }.bind(this)
-    });
+      }.bind(this));
+    }
   },
 
   handleExistingQuestion: function(questionId) {
@@ -52,7 +43,7 @@ var Content = React.createClass({
   render: function() {
     var content;
     if (this.state.newQuestion) {
-      content = (<NewQuestionForm onQuestionSubmit={this.handleQuestionSubmit} />);
+      content = (<NewPostForm onPost={this.handleQuestionPost} />);
     } else if (this.state.username) {
       content = (<Menu username={this.state.username.username}
                  onNewQuestion={this.handleNewQuestion} />);
@@ -62,7 +53,8 @@ var Content = React.createClass({
     var answers;
     if (this.state.showQuestion !== undefined) {
       var answers = (<Question key={this.state.showQuestion}
-                               questionId={this.state.showQuestion}/>);
+                               questionId={this.state.showQuestion}
+                               username={this.state.username.username} />);
     }
     return (<div>
               {content}
@@ -126,30 +118,38 @@ var Menu = React.createClass({
   }
 });
 
-var NewQuestionForm = React.createClass({
+var NewPostForm = React.createClass({
   getInitialState: function() {
-    return {question: ''};
+    return {text: ''};
   },
-  handleQuestionChange: function(e) {
-    this.setState({question: e.target.value});
+  handleTextChange: function(e) {
+    this.setState({text: e.target.value});
   },
   handleSubmit: function(e) {
     e.preventDefault();
-    var question = this.state.question.trim();
-    if (!question) {
+    var text = this.state.text.trim();
+    if (!text) {
       return;
     }
-    this.props.onQuestionSubmit(question);
+    this.props.onPost(text);
   },
+
+  handleCancel: function(e) {
+    this.props.onPost(null);
+  },
+
   render: function() {
     return (
         <form onSubmit={this.handleSubmit}>
-        <p>Enter your question.</p>
+        <p>Enter your {this.props.answer ? "answer" : "question"}.</p>
         <div><textarea rows="10" cols="80"
-              placeholder="Why do things happen?"
-              onChange={this.handleQuestionChange}
-              value={this.state.question} /></div>
-        <div><input type="submit" value="Post Question" /></div>
+              placeholder={this.props.answer ? "The answer is..." : "Why do things happen?"}
+              onChange={this.handleTextChange}
+              value={this.state.text} /></div>
+        <div>
+          <input type="submit" value={"Post " + (this.props.answer ? "Answer" : "Question")} />
+          <input type="button" value="Cancel" onClick={this.handleCancel} />
+        </div>
         </form>
     );
   }
@@ -196,8 +196,11 @@ var QuestionList = React.createClass({
 
 var Question = React.createClass({
   componentDidMount: function() {
+    this.loadQuestion();
+  },
+
+  loadQuestion: function() {
     var questionUrl = QUESTION_URL + "/" + this.props.questionId;
-    console.log("sshshsh", this.props.questionId, questionUrl);
     $.ajax({
       url: questionUrl,
       dataType: 'json',
@@ -211,6 +214,27 @@ var Question = React.createClass({
     });
   },
 
+  handleNewAnswerClick: function(e) {
+    e.preventDefault();
+    this.setState({newAnswer: true});
+  },
+
+  handleNewPledgeClick: function(e) {
+    e.preventDefault();
+    // FIXME: Implement
+  },
+
+  handleAnswerPost: function(answer) {
+    this.setState({newAnswer: false});
+    if (answer !== null) {
+      submitPost({answer: answer,
+                  username: this.props.username,
+                  questionId: this.props.questionId}).then(function() {
+        this.loadQuestion();
+      }.bind(this));
+    }
+  },
+
   render: function() {
     if (!this.state || !this.state.data) {
       return(<div>Loading question {this.props.questionId}...</div>);
@@ -221,8 +245,50 @@ var Question = React.createClass({
     if (items.length == 0) {
       items.push(<li key="invalid"><em>No answers posted yet.</em></li>);
     }
-    return (<div><div>Question: &ldquo;{this.state.data.question}&rdquo; by <em>{this.state.data.username}</em></div><ul>{items}</ul></div>);
+
+    var menu;
+    if (this.state.newAnswer) {
+      menu = (<NewPostForm onPost={this.handleAnswerPost} answer={true} />);
+    } else if (this.props.username) {
+      menu = (
+        <div>
+          <div><a href="#" onClick={this.handleNewAnswerClick}>Add new answer...</a></div>
+          <div><a href="#" onClick={this.handleNewPledgeClick}>Add new pledge...</a></div>
+        </div>
+      );
+    } else {
+      menu = (<div><em>Log in with a username to add an answer or pledge to this question.</em></div>);
+    }
+
+    return (<div>
+              <div>Question: &ldquo;{this.state.data.question}&rdquo;
+                by <em>{this.state.data.username}</em>
+              </div>
+              <ul>{items}</ul>
+              {menu}
+            </div>);
   }
 });
 
 ReactDOM.render(<Content />, document.getElementById('content'));
+
+function submitPost(data) {
+  // FIXME: Don't really need jQuery for this.
+  return new Promise(function(resolve, reject) {
+    $.ajax({
+      url: SUBMIT_URL,
+      dataType: 'json',
+      type: 'POST',
+      data: data,
+      success: function(response) {
+        console.log("Submitted data", data);
+        console.log("Got response", response);
+        resolve(response);
+      },
+      error: function(xhr, status, err) {
+        console.log("Error submitting data", data, "status", status, "error", err.toString());
+        reject({xhr: xhr, status: status, err: err});
+      }
+    });
+  });
+}
