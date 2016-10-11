@@ -1,3 +1,5 @@
+var SUBMIT_URL = "/api/submit";
+
 var Content = React.createClass({
   getInitialState: function() {
     return {username: ''};
@@ -14,6 +16,20 @@ var Content = React.createClass({
   handleQuestionSubmit: function(question) {
     console.log("FIXME: create question", question);
     this.setState({newQuestion: false});
+    // FIXME: Don't really need jQuery for this.
+    $.ajax({
+      url: SUBMIT_URL,
+      dataType: 'json',
+      type: 'POST',
+      data: question,
+      success: function(response) {
+        console.log("Posted question", question);
+        console.log("Got response", response);
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.log("Error posting question", question, "status", status, "error", err.toString());
+      }.bind(this)
+    });
   },
 
   render: function() {
