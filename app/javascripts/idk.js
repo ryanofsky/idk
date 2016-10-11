@@ -30,9 +30,25 @@ var LoginForm = React.createClass({
 });
 
 var Menu = React.createClass({
-    render: function() {
-      return (<div>Hi {this.props.username}</div>);
-    }
+  handleNewQuestionClick: function(e) {
+    e.preventDefault();
+    this.props.onNewQuestion();
+  },
+
+  render: function() {
+    return (
+        <div>
+        <p>Hello, {this.props.username}.</p>
+        <ul>
+        <li><a href="#" onClick={this.handleNewQuestionClick}>New question</a></li>
+        </ul>
+        </div>
+    );
+  }
+});
+
+var NewQuestion = React.createClass({
+  render: function() { return (<div>New question</div>); }
 });
 
 var Content = React.createClass({
@@ -44,10 +60,17 @@ var Content = React.createClass({
     this.setState({username: username});
   },
 
+  handleNewQuestion: function() {
+    this.setState({newQuestion: true});
+  },
+
   render: function() {
     var content;
-    if (this.state.username) {
-      content = (<Menu username={this.state.username.username} />);
+    if (this.state.newQuestion) {
+      content = (<NewQuestion />);
+    } else if (this.state.username) {
+      content = (<Menu username={this.state.username.username}
+                       onNewQuestion={this.handleNewQuestion} />);
     } else {
       content = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
     }
