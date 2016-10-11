@@ -1,4 +1,5 @@
 var QUESTIONS_URL = "/api/questions";
+var QUESTION_URL = "/api/question";
 var SUBMIT_URL = "/api/submit";
 
 // Page layout:
@@ -7,6 +8,8 @@ var SUBMIT_URL = "/api/submit";
 //       - LoginForm
 //       - Menu
 //       - NewQuestionForm
+//     - Optional:
+//       - Question
 //     - QuestionList
 
 var Content = React.createClass({
@@ -23,17 +26,17 @@ var Content = React.createClass({
   },
 
   handleQuestionSubmit: function(question) {
-    console.log("FIXME: create question", question);
     this.setState({newQuestion: false});
     // FIXME: Don't really need jQuery for this.
     $.ajax({
       url: SUBMIT_URL,
       dataType: 'json',
       type: 'POST',
-      data: question,
+      data: {question: question, username: this.state.username.username},
       success: function(response) {
         console.log("Posted question", question);
         console.log("Got response", response);
+        this.refs.questionList.loadQuestions();
       }.bind(this),
       error: function(xhr, status, err) {
         console.log("Error posting question", question, "status", status, "error", err.toString());
@@ -56,10 +59,18 @@ var Content = React.createClass({
     } else {
       content = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
     }
+    var answers;
+    if (this.state.showQuestion !== undefined) {
+      var answers = (<Question key={this.state.showQuestion}
+                               questionId={this.state.showQuestion}/>);
+    }
     return (<div>
               {content}
+              {answers}
               <hr />
-              <QuestionList onExistingQuestion={this.handleExistingQuestion} />
+              <QuestionList onExistingQuestion={this.handleExistingQuestion}
+                            questionId={this.state.showQuestion}
+                            ref="questionList" />
             </div>);
   }
 });
@@ -128,7 +139,7 @@ var NewQuestionForm = React.createClass({
     if (!question) {
       return;
     }
-    this.props.onQuestionSubmit({question: question});
+    this.props.onQuestionSubmit(question);
   },
   render: function() {
     return (
@@ -146,6 +157,10 @@ var NewQuestionForm = React.createClass({
 
 var QuestionList = React.createClass({
   componentDidMount: function() {
+    this.loadQuestions();
+  },
+
+  loadQuestions: function() {
     $.ajax({
       url: QUESTIONS_URL,
       dataType: 'json',
@@ -170,9 +185,43 @@ var QuestionList = React.createClass({
       return(<div>Loading questions...</div>);
     }
     var items = this.state.data.questions.map(function(question) {
-      return (<li key={question.id}><a href="#" onClick={this.handleClick.bind(null, question.id)}>{question.question}</a></li>);
+      var text = question.questionId === this.props.questionId ?
+          (<span>&ldquo;{question.question}&rdquo;</span>) :
+          (<a href="#" onClick={this.handleClick.bind(null, question.questionId)}>{question.question}</a>);
+      return (<li key={question.questionId}>{text} by <em>{question.username}</em></li>);
     }.bind(this));
     return (<div><div>Question List:</div><ul>{items}</ul></div>);
+  }
+});
+
+var Question = React.createClass({
+  componentDidMount: function() {
+    var questionUrl = QUESTION_URL + "/" + this.props.questionId;
+    console.log("sshshsh", this.props.questionId, questionUrl);
+    $.ajax({
+      url: questionUrl,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.log("Error retrieving answers. Status", status, "error", err.toString());
+      }.bind(this)
+    });
+  },
+
+  render: function() {
+    if (!this.state || !this.state.data) {
+      return(<div>Loading question {this.props.questionId}...</div>);
+    }
+    var items = this.state.data.answers.map(function(answer) {
+      return (<li key={answer.answerId}>&ldquo;{answer.answer}&rdquo; by <em>{answer.username}</em></li>);
+    }.bind(this));
+    if (items.length == 0) {
+      items.push(<li key="invalid"><em>No answers posted yet.</em></li>);
+    }
+    return (<div><div>Question: &ldquo;{this.state.data.question}&rdquo; by <em>{this.state.data.username}</em></div><ul>{items}</ul></div>);
   }
 });
 
