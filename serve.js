@@ -27,12 +27,36 @@ app.use(function(req, res, next) {
   next();
 });
 
+app.get('/api/questions', function(req, res) {
+  var data = {questions: []};
+  db.each("SELECT id, question FROM questions ORDER BY id DESC",
+    function(err, row) {
+      if (err) {
+        console.error(err);
+        res.status(500);
+        res.end();
+        return;
+      }
+      console.log("got row", row);
+      data.questions.push(row);
+    },
+    function(err, rowcount) {
+      if (err) {
+        console.error(err);
+        res.status(500);
+        res.end();
+        return;
+      }
+      res.json(data);
+    });
+});
+
 app.post('/api/submit', function(req, res) {
   console.log("got question", req.body);
   db.run("INSERT INTO questions(question) " +
          "VALUES (?)", req.body.question, function(err, row) {
     if (err) {
-      console.err(err);
+      console.error(err);
       res.status(500);
       res.end();
       return;

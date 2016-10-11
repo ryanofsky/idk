@@ -16,5 +16,6 @@ http://localhost:8080/
 
 ```
 curl -v -H "Content-Type: application/json" -X POST -d '{"question":"what is life?"}' http://localhost:8080/api/submit
+curl -v http://localhost:8080/api/questions
 echo .dump | sqlite3 idk.sqlite3
 ```
