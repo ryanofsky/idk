@@ -1,4 +1,13 @@
+var QUESTIONS_URL = "/api/questions";
 var SUBMIT_URL = "/api/submit";
+
+// Page layout:
+//   - Content
+//     - One of:
+//       - LoginForm
+//       - Menu
+//       - NewQuestionForm
+//     - QuestionList
 
 var Content = React.createClass({
   getInitialState: function() {
@@ -32,6 +41,11 @@ var Content = React.createClass({
     });
   },
 
+  handleExistingQuestion: function(questionId) {
+    console.log("handleExistingQuestion", questionId);
+    this.setState({showQuestion: questionId});
+  },
+
   render: function() {
     var content;
     if (this.state.newQuestion) {
@@ -42,7 +56,11 @@ var Content = React.createClass({
     } else {
       content = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
     }
-    return (content);
+    return (<div>
+              {content}
+              <hr />
+              <QuestionList onExistingQuestion={this.handleExistingQuestion} />
+            </div>);
   }
 });
 
@@ -63,8 +81,9 @@ var LoginForm = React.createClass({
   },
   render: function() {
     return (
+        <div>
         <form onSubmit={this.handleSubmit}>
-        <p>Enter user name to log in.</p>
+        Login:
         <input
           type="text"
           placeholder="username"
@@ -72,7 +91,8 @@ var LoginForm = React.createClass({
           onChange={this.handleUsernameChange}
         />
         <input type="submit" value="Log in" />
-      </form>
+        </form>
+        </div>
     );
   }
 });
@@ -121,6 +141,38 @@ var NewQuestionForm = React.createClass({
         <div><input type="submit" value="Post Question" /></div>
         </form>
     );
+  }
+});
+
+var QuestionList = React.createClass({
+  componentDidMount: function() {
+    $.ajax({
+      url: QUESTIONS_URL,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.log("Error retrieving questions. Status", status, "error", err.toString());
+      }.bind(this)
+    });
+  },
+
+  handleClick: function(questionId, e) {
+    console.log("click", questionId, e);
+    e.preventDefault();
+    this.props.onExistingQuestion(questionId);
+  },
+
+  render: function() {
+    if (!this.state || !this.state.data) {
+      return(<div>Loading questions...</div>);
+    }
+    var items = this.state.data.questions.map(function(question) {
+      return (<li key={question.id}><a href="#" onClick={this.handleClick.bind(null, question.id)}>{question.question}</a></li>);
+    }.bind(this));
+    return (<div><div>Question List:</div><ul>{items}</ul></div>);
   }
 });
 
