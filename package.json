@@ -1,8 +1,8 @@
 {
   "name": "idk",
   "dependencies": {
-    "truffle": "latest",
-    "ethereumjs-testrpc": "latest",
-    "express": "latest"
+    "ethereumjs-testrpc": "^3.0.0",
+    "express": "^4.14.0",
+    "truffle": "^2.0.8"
   }
 }
