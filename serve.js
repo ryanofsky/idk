@@ -71,6 +71,12 @@ app.get('/api/question/:id', function(req, res) {
         res.end();
         return;
       }
+      if (!row) {
+        console.error("Question not found", {id: id});
+        res.status(404);
+        res.end();
+        return;
+      }
       var question = row;
       question.answers = [];
 
