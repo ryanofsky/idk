@@ -11,10 +11,15 @@ var Content = React.createClass({
     this.setState({newQuestion: true});
   },
 
+  handleQuestionSubmit: function(question) {
+    console.log("FIXME: create question", question);
+    this.setState({newQuestion: false});
+  },
+
   render: function() {
     var content;
     if (this.state.newQuestion) {
-      content = (<NewQuestion />);
+      content = (<NewQuestionForm onQuestionSubmit={this.handleQuestionSubmit} />);
     } else if (this.state.username) {
       content = (<Menu username={this.state.username.username}
                  onNewQuestion={this.handleNewQuestion} />);
@@ -74,8 +79,33 @@ var Menu = React.createClass({
   }
 });
 
-var NewQuestion = React.createClass({
-  render: function() { return (<div>New question</div>); }
+var NewQuestionForm = React.createClass({
+  getInitialState: function() {
+    return {question: ''};
+  },
+  handleQuestionChange: function(e) {
+    this.setState({question: e.target.value});
+  },
+  handleSubmit: function(e) {
+    e.preventDefault();
+    var question = this.state.question.trim();
+    if (!question) {
+      return;
+    }
+    this.props.onQuestionSubmit({question: question});
+  },
+  render: function() {
+    return (
+        <form onSubmit={this.handleSubmit}>
+        <p>Enter your question.</p>
+        <div><textarea rows="10" cols="80"
+              placeholder="Why do things happen?"
+              onChange={this.handleQuestionChange}
+              value={this.state.question} /></div>
+        <div><input type="submit" value="Post Question" /></div>
+        </form>
+    );
+  }
 });
 
 ReactDOM.render(<Content />, document.getElementById('content'));
