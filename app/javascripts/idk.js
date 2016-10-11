@@ -7,9 +7,9 @@ var SUBMIT_URL = "/api/submit";
 //     - One of:
 //       - LoginForm
 //       - Menu
-//       - NewPostForm
-//     - Optional:
+//     - One of:
 //       - Question
+//       - NewPostForm
 //     - QuestionList
 
 var Content = React.createClass({
@@ -22,11 +22,11 @@ var Content = React.createClass({
   },
 
   handleNewQuestion: function() {
-    this.setState({newQuestion: true});
+    this.setState({showQuestion: true});
   },
 
   handleQuestionPost: function(question) {
-    this.setState({newQuestion: false});
+    this.setState({showQuestion: null});
     if (question !== null) {
       submitPost({question: question,
                   username: this.state.username.username}).then(function() {
@@ -41,25 +41,26 @@ var Content = React.createClass({
   },
 
   render: function() {
-    var content;
-    if (this.state.newQuestion) {
-      content = (<NewPostForm onPost={this.handleQuestionPost} />);
-    } else if (this.state.username) {
-      content = (<Menu username={this.state.username.username}
+    var menu;
+    if (this.state.username) {
+      menu = (<Menu username={this.state.username.username}
                  onNewQuestion={this.handleNewQuestion} />);
     } else {
-      content = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
+      menu = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
     }
-    var answers;
-    if (this.state.showQuestion !== undefined) {
-      var answers = (<Question key={this.state.showQuestion}
-                               questionId={this.state.showQuestion}
-                               username={this.state.username.username} />);
+
+    var question;
+    if (this.state.showQuestion === true) {
+      question = (<NewPostForm onPost={this.handleQuestionPost} />);
+    }
+    else if (this.state.showQuestion) {
+      question = (<Question key={this.state.showQuestion}
+                            questionId={this.state.showQuestion}
+                            username={this.state.username.username} />);
     }
     return (<div>
-              {content}
-              {answers}
-              <hr />
+              {menu}<hr />
+              {question}{question ? (<hr />) : null}
               <QuestionList onExistingQuestion={this.handleExistingQuestion}
                             questionId={this.state.showQuestion}
                             ref="questionList" />
