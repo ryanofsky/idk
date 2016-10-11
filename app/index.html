@@ -1,12 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>MetaCoin - Default Truffle App</title>
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
   <link href="./app.css" rel='stylesheet' type='text/css'>
   <script src="./app.js"></script>
+  <!--
+    Script includes below taken from
+    https://github.com/reactjs/react-tutorial/blob/master/public/index.html
+
+    FIXME: Use webpack instead of in-browser babel transformer, following
+    http://truffleframework.com/tutorials/bundling-with-webpack
+  -->
+  <script src="https://unpkg.com/react@15.3.0/dist/react.js"></script>
+  <script src="https://unpkg.com/react-dom@15.3.0/dist/react-dom.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
 </head>
 <body>
+  <div id="content"></div>
+  <script src="./idk.js" type="text/babel"></script>
+
+  <hr>
+
   <h1>MetaCoin</h1>
   <h2>Example Truffle Dapp</h2>
   <h3>You have <span class="black"><span id="balance"></span> META</span></h3>

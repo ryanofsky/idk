@@ -4,6 +4,9 @@ module.exports = {
     "app.js": [
       "javascripts/app.js"
     ],
+    "idk.js": [
+        "javascripts/idk.js"
+    ],
     "app.css": [
       "stylesheets/app.css"
     ],
