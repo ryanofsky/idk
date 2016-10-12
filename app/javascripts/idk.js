@@ -222,7 +222,7 @@ var Question = React.createClass({
 
   handleNewPledgeClick: function(e) {
     e.preventDefault();
-    // FIXME: Implement
+    this.setState({newPledge: true});
   },
 
   handleAnswerPost: function(answer) {
@@ -236,7 +236,31 @@ var Question = React.createClass({
     }
   },
 
+  handleNewPledge: function(amount, deadline) {
+    this.setState({newPledge: false});
+    if (amount) {
+      var idk = Idk.deployed();
+      submitPost({pledge: true,
+                  username: this.props.username,
+                  questionId: this.props.questionId})
+        .then(function(response) {
+          var pledgeId = response.lastId;
+          console.log("Added pledge row id", pledgeId);
+          return idk.deposit({from: window.accounts[0], value: amount})
+            .then(function() {
+              console.log("Called Idk.deposit");
+              return idk.pledge(pledgeId, amount, 0, {from: window.accounts[0]});
+            }).then(function() {
+              console.log("Called Idk.pledge");
+            });
+        }).then(function() {
+          console.log("Finished pledge");
+        });
+    }
+  },
+
   render: function() {
+    // FIXME: Need to retrieve and display pledges.
     if (!this.state || !this.state.data) {
       return(<div>Loading question {this.props.questionId}...</div>);
     }
@@ -250,6 +274,8 @@ var Question = React.createClass({
     var menu;
     if (this.state.newAnswer) {
       menu = (<NewPostForm onPost={this.handleAnswerPost} answer={true} />);
+    } else if (this.state.newPledge) {
+      menu = (<NewPledgeForm onPost={this.handleNewPledge} />);
     } else if (this.props.username) {
       menu = (
         <div>
@@ -268,6 +294,46 @@ var Question = React.createClass({
               <ul>{items}</ul>
               {menu}
             </div>);
+  }
+});
+
+var NewPledgeForm = React.createClass({
+  getInitialState: function() {
+    return {amount: '1000', deadline: '0'};
+  },
+  handleAmountChange: function(e) {
+    this.setState({amount: e.target.value});
+  },
+  handleDeadlineChange: function(e) {
+    this.setState({deadline: e.target.value});
+  },
+  handleSubmit: function(e) {
+    e.preventDefault();
+    this.props.onPost(this.state.amount, this.state.deadline);
+  },
+  handleCancel: function(e) {
+    this.props.onPost();
+  },
+  render: function() {
+    return (
+        <div>
+        <div>Add new pledge:</div>
+        <form onSubmit={this.handleSubmit}>
+        <div>
+          <label htmlFor="pledgeAmount">Amount:</label>
+          <input id="pledgeAmount" type="text" placeholder="1000" value={this.state.amount} onChange={this.handleAmountChange} />
+        </div>
+        <div>
+          <label htmlFor="pledgeDeadline">Deadline:</label>
+          <input id="pledgeDeadline" type="text" placeholder="0" value={this.state.deadline} onChange={this.handleDeadlineChange} />
+        </div>
+        <div>
+          <input type="submit" value="Submit" />
+          <input type="button" value="Cancel" onClick={this.handleCancel} />
+        </div>
+        </form>
+        </div>
+    );
   }
 });
 

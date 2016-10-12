@@ -14,13 +14,17 @@ db.serialize(function() {
          "  questionId INTEGER PRIMARY KEY, " +
          "  username TEXT NOT NULL, " +
          "  question TEXT NOT NULL);");
-  sql = ("CREATE TABLE IF NOT EXISTS answers (" +
+  db.run("CREATE TABLE IF NOT EXISTS answers (" +
          "  answerId INTEGER PRIMARY KEY, " +
          "  questionId INTEGER NOT NULL, " +
          "  username TEXT NOT NULL, " +
          "  answer TEXT NOT NULL, " +
          "  FOREIGN KEY(questionId) REFERENCES questions(questionId));");
-  db.run(sql);
+  db.run("CREATE TABLE IF NOT EXISTS pledges (" +
+         "  pledgeId INTEGER PRIMARY KEY, " +
+         "  questionId INTEGER NOT NULL, " +
+         "  username TEXT NOT NULL, " +
+         "  FOREIGN KEY(questionId) REFERENCES questions(questionId));");
 });
 
 var app = express();
@@ -113,6 +117,9 @@ app.post('/api/submit', function(req, res) {
   } else if (req.body.answer) {
     sql = "INSERT INTO answers(questionId, username, answer) VALUES (?, ?, ?)";
     params = [req.body.questionId, req.body.username, req.body.answer];
+  } else if (req.body.pledge) {
+    sql = "INSERT INTO pledges(questionId, username) VALUES (?, ?)";
+    params = [req.body.questionId, req.body.username];
   }
   db.run(sql, params, function(err, row) {
     if (err) {
@@ -122,7 +129,7 @@ app.post('/api/submit', function(req, res) {
       return;
     }
     console.log("inserted row", this.lastID);
-    res.json({"success": true});
+    res.json({success: true, lastId: this.lastID});
   });
 });
 
