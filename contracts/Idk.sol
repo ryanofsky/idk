@@ -1,3 +1,5 @@
+pragma solidity ^0.4.2;
+
 contract Idk {
   struct Pledge {
     address from;
@@ -10,7 +12,7 @@ contract Idk {
 
   mapping (uint => Pledge) pledges;  // Map from sqlite pledgeId to pledge info.
 
-  function deposit() {
+  function deposit() payable {
       balances[msg.sender] += msg.value;
   }
 
