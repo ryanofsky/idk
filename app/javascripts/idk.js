@@ -208,11 +208,24 @@ var Question = React.createClass({
       cache: false,
       success: function(data) {
         this.setState({data: data});
+        this.loadPledges();
       }.bind(this),
       error: function(xhr, status, err) {
         console.log("Error retrieving answers. Status", status, "error", err.toString());
       }.bind(this)
     });
+  },
+
+  loadPledges: function() {
+    var idk = Idk.deployed();
+    Promise.all(this.state.data.pledges.map(function(pledge) {
+      return Promise.all([
+        // FIXME: There is some problem here, returned deadlines and amounts always coming back as 0.
+        idk.getPledgeDeadline.call(pledge.pledgeId).then(function(val) { pledge.deadline = val.toString(); }),
+        idk.getPledgeAmount.call(pledge.pledgeId).then(function(val) { pledge.amount = val.toString(); }),
+        idk.getPledgeDisbursed.call(pledge.pledgeId).then(function(val) { pledge.disbursed = val; }),
+      ]).then(function() { return pledge; });
+    })).then(function(pledges) { this.setState({pledges: {pledges: pledges}}); }.bind(this));
   },
 
   handleNewAnswerClick: function(e) {
@@ -248,14 +261,15 @@ var Question = React.createClass({
           console.log("Added pledge row id", pledgeId);
           return idk.deposit({from: window.accounts[0], value: amount})
             .then(function() {
-              console.log("Called Idk.deposit");
-              return idk.pledge(pledgeId, amount, 0, {from: window.accounts[0]});
+              console.log("Called Idk.deposit, id", pledgeId, "amount", amount, "deadline", deadline);
+              return idk.pledge(pledgeId, amount, deadline, {from: window.accounts[0]});
             }).then(function() {
               console.log("Called Idk.pledge");
             });
         }).then(function() {
           console.log("Finished pledge");
-        });
+          this.loadQuestion();
+        }.bind(this));
     }
   },
 
@@ -264,11 +278,28 @@ var Question = React.createClass({
     if (!this.state || !this.state.data) {
       return(<div>Loading question {this.props.questionId}...</div>);
     }
-    var items = this.state.data.answers.map(function(answer) {
+    var answers = this.state.data.answers.map(function(answer) {
       return (<li key={answer.answerId}>&ldquo;{answer.answer}&rdquo; by <em>{answer.username}</em></li>);
     }.bind(this));
-    if (items.length == 0) {
-      items.push(<li key="invalid"><em>No answers posted yet.</em></li>);
+    if (answers.length == 0) {
+      answers.push(<li key="invalid"><em>No answers posted yet.</em></li>);
+    }
+
+    var pledges;
+    if (this.state.pledges) {
+      pledges = this.state.pledges.pledges.map(function(pledge) {
+        return (<li key={pledge.pledgeId}>
+                Id {pledge.pledgeId},
+                Amount {pledge.amount},
+                Deadline {pledge.deadline},
+                Disbursed {pledge.disbursed ? "Yes" : "No"}{" "}
+                by <em>{pledge.username}</em></li>);
+      }.bind(this));
+      if (pledges.length == 0) {
+        pledges.push(<li key="invalid"><em>No pledges posted yet.</em></li>);
+      }
+    } else {
+      pledges = [(<li key="invalid"><em>Loading pledge information...</em></li>)];
     }
 
     var menu;
@@ -291,7 +322,10 @@ var Question = React.createClass({
               <div>Question: &ldquo;{this.state.data.question}&rdquo;
                 by <em>{this.state.data.username}</em>
               </div>
-              <ul>{items}</ul>
+              Answer List:
+              <ul>{answers}</ul>
+              Pledge List:
+              <ul>{pledges}</ul>
               {menu}
             </div>);
   }
@@ -309,7 +343,7 @@ var NewPledgeForm = React.createClass({
   },
   handleSubmit: function(e) {
     e.preventDefault();
-    this.props.onPost(this.state.amount, this.state.deadline);
+    this.props.onPost(parseInt(this.state.amount), parseInt(this.state.deadline));
   },
   handleCancel: function(e) {
     this.props.onPost();

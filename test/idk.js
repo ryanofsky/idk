@@ -20,6 +20,17 @@ contract('Idk', function(accounts) {
       return idk.getBalance.call(accounts[1]);
     }).then(function(balance) {
       assert.equal(balance, 1000);
+    }).then(function() {
+      var pledge = {};
+      return Promise.all([
+        idk.getPledgeDeadline.call(pledgeId).then(function(val) { pledge.deadline = val; }),
+        idk.getPledgeAmount.call(pledgeId).then(function(val) { pledge.amount = val; }),
+        idk.getPledgeDisbursed.call(pledgeId).then(function(val) { pledge.disbursed = val; }),
+      ]).then(function() {
+        assert.equal(pledge.deadline, deadline);
+        assert.equal(pledge.amount, 7000);
+        assert.equal(pledge.disbursed, true);
+      });
     });
   });
 });

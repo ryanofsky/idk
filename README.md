@@ -25,13 +25,14 @@ Then navigate to http://localhost:8080/
 
 ## Status
 
+There's a bug where balances and deadlines of all pledges are all displayed as 0.
+
 Much but not all of the essential functionality is currently implemented.
 There's a bare-bones UI for posting questions and answers, and pledging ether to
 questions.
 
 The major missing features are:
 
-* A UI for displaying the pledges attached to questions.
 * UIs for resolving pledges or withdrawing either (the underlying smart
   contract functions are implemented).
 * Real logins / identities. Would need some identity layer or integration with a

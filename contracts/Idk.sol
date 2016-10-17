@@ -61,7 +61,19 @@ contract Idk {
     balances[pledge.from] = newBalance;
   }
 
-	function getBalance(address addr) returns(uint) {
-		return balances[addr];
-	}
+  function getBalance(address addr) returns(uint) {
+   return balances[addr];
+  }
+
+  function getPledgeDeadline(uint pledgeId) returns(uint) {
+    return pledges[pledgeId].deadline;
+  }
+
+  function getPledgeAmount(uint pledgeId) returns(uint) {
+    return pledges[pledgeId].amount;
+  }
+
+  function getPledgeDisbursed(uint pledgeId) returns(bool) {
+    return pledges[pledgeId].disbursed;
+  }
 }

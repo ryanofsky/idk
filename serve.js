@@ -66,6 +66,8 @@ app.get('/api/questions', function(req, res) {
 
 app.get('/api/question/:id', function(req, res) {
   var id = req.params.id;
+  // FIXME: Dedup these SQL queries and chain with promises instead of using
+  // nested callbacks.
   db.get("SELECT questionId, question, username " +
          "FROM questions WHERE questionId = ?", id,
     function(err, row) {
@@ -83,6 +85,7 @@ app.get('/api/question/:id', function(req, res) {
       }
       var question = row;
       question.answers = [];
+      question.pledges = [];
 
       db.each("SELECT answerId, answer, username " +
               "FROM answers WHERE questionId = ?", id,
@@ -103,8 +106,30 @@ app.get('/api/question/:id', function(req, res) {
             res.end();
             return;
           }
-          res.json(question);
+
+          db.each("SELECT pledgeId, username " +
+                  "FROM pledges WHERE questionId = ?", id,
+            function(err, row) {
+              if (err) {
+                console.error(err);
+                res.status(500);
+                res.end();
+                return;
+              }
+              console.log("got pledge", row);
+              question.pledges.push(row);
+            },
+            function(err, rowcount) {
+              if (err) {
+                console.error(err);
+                res.status(500);
+                res.end();
+                return;
+              }
+              res.json(question);
+            });
         });
+
     });
 });
 
