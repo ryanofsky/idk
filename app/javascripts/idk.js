@@ -21,6 +21,10 @@ var Content = React.createClass({
     this.setState({username: username});
   },
 
+  handleLogout: function() {
+    this.setState({username: ''});
+  },
+
   handleNewQuestion: function() {
     this.setState({showQuestion: true});
   },
@@ -44,6 +48,7 @@ var Content = React.createClass({
     var menu;
     if (this.state.username) {
       menu = (<Menu username={this.state.username.username}
+                 onLogout={this.handleLogout}
                  onNewQuestion={this.handleNewQuestion} />);
     } else {
       menu = (<LoginForm onLoginSubmit={this.handleLoginSubmit} />);
@@ -107,12 +112,21 @@ var Menu = React.createClass({
     this.props.onNewQuestion();
   },
 
+  handleLogoutClick: function(e) {
+    e.preventDefault();
+    this.props.onLogout();
+  },
+
   render: function() {
     return (
         <div>
         <p>Hello, {this.props.username}.</p>
         <ul>
         <li><a href="#" onClick={this.handleNewQuestionClick}>New question</a></li>
+        <li>Deposit Ether (<em>unimplemented</em>)</li>
+        <li>Withdraw Ether (<em>unimplemented</em>)</li>
+        <li>Resolve Pledges (<em>unimplemented</em>)</li>
+        <li><a href="#" onClick={this.handleLogoutClick}>Log out</a></li>
         </ul>
         </div>
     );

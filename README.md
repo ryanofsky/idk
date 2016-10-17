@@ -40,8 +40,7 @@ The major missing features are:
 
 Other possible TODOS:
 
-* Store current username in cookie, add logout link so don't have to refresh
-  when switching users.
+* Store current username in cookie.
 * Refactor and clean up up lots major code duplication in serve.js and idk.js.
 * Clean up javascript deployment. Use webpack instead of in-browser babel
   transforme for JSX code.
